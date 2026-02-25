@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bug 的 VC 计算器</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 50%, #ffcc80 100%);
+      color: #4a3728;
+      padding: 20px;
+    }
+    .container {
+      width: 100%;
+      max-width: 440px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 36px 32px;
+      box-shadow: 0 8px 32px rgba(180, 120, 60, 0.15), 0 2px 8px rgba(0,0,0,0.06);
+    }
+    h1 {
+      text-align: center;
+      color: #e67e22;
+      font-size: 24px;
+      margin-bottom: 28px;
+      letter-spacing: 1px;
+    }
+    .input-group {
+      margin-bottom: 22px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: 15px;
+      color: #6d4c2a;
+    }
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #f0dcc8;
+      border-radius: 12px;
+      font-size: 16px;
+      background: #fffaf5;
+      color: #4a3728;
+      transition: border-color 0.25s, box-shadow 0.25s;
+      outline: none;
+    }
+    input:focus {
+      border-color: #e67e22;
+      box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.15);
+    }
+    input::placeholder {
+      color: #c4a882;
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #f39c12, #e67e22);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.25s;
+      box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
+      letter-spacing: 1px;
+    }
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(230, 126, 34, 0.4);
+    }
+    button:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(230, 126, 34, 0.3);
+    }
+    #result {
+      margin-top: 24px;
+      padding: 20px;
+      background: linear-gradient(135deg, #fef9f3, #fdf0e0);
+      border-radius: 14px;
+      text-align: center;
+      font-size: 16px;
+      line-height: 2;
+      display: none;
+      border: 1px solid #f0dcc8;
+      animation: fadeIn 0.3s ease;
+    }
+    #result strong {
+      font-size: 18px;
+      color: #d35400;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .note {
+      font-size: 13px;
+      color: #9a7d5a;
+      margin-top: 20px;
+      line-height: 1.8;
+      padding: 14px 16px;
+      background: rgba(230, 126, 34, 0.06);
+      border-radius: 10px;
+      border-left: 3px solid #f39c12;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🐹 Bug 的 VC 计算器</h1>
+    <div class="input-group">
+      <label for="weight">荷兰猪体重（克）</label>
+      <input type="number" id="weight" placeholder="例如：1000" min="100" max="2000">
+    </div>
+    <button onclick="calculate()">计算每日 VC 需求</button>
+    <div id="result"></div>
+    <p class="note">💡 建议：日常维持用 10mg/kg，应激/生病/老年用 30mg/kg<br>VC 片常见规格：50mg/片，可掰碎使用</p>
+  </div>
+
+  <script>
+    function calculate() {
+      const weight = parseFloat(document.getElementById('weight').value);
+      const resultEl = document.getElementById('result');
+      
+      if (!weight || weight < 100) {
+        alert('请输入有效的体重（100–2000 克）');
+        return;
+      }
+
+      const kg = weight / 1000;
+      const low = (kg * 10).toFixed(1);
+      const high = (kg * 30).toFixed(1);
+
+      resultEl.innerHTML = `
+        <strong>体重：${weight} 克</strong><br>
+        日常维持：${low} mg VC<br>
+        应激/康复期：${high} mg VC
+      `;
+      resultEl.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
