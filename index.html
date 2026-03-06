@@ -116,6 +116,21 @@
     .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(230,126,34,0.35); }
     .btn:active { transform: translateY(0); box-shadow: 0 2px 8px rgba(230,126,34,0.25); }
     .btn-sm { width: auto; padding: 8px 16px; font-size: 13px; border-radius: 10px; }
+    .btn-chip {
+      width: auto;
+      padding: 7px 12px;
+      font-size: 12px;
+      border-radius: 999px;
+      background: #fff6ec;
+      color: #c46a1a;
+      border: 1px solid #f1c79b;
+      box-shadow: none;
+    }
+    .btn-chip:hover {
+      transform: none;
+      box-shadow: none;
+      background: #ffe9d1;
+    }
     .btn-danger {
       background: linear-gradient(135deg, #e74c3c, #c0392b);
       box-shadow: 0 3px 10px rgba(231,76,60,0.25);
@@ -207,6 +222,16 @@
     .tag-red { background: #ffe8e8; color: #e74c3c; }
     .flex-row { display: flex; gap: 8px; align-items: flex-end; }
     .flex-row .form-group { flex: 1; margin-bottom: 0; }
+    .accuracy-box {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #fffaf3;
+      border: 1px dashed #f1c79b;
+      color: #8b673f;
+      font-size: 13px;
+      line-height: 1.7;
+    }
     /* 滚动条美化 */
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -251,6 +276,12 @@
       <tbody id="food-table-body"></tbody>
     </table>
     <p class="note-box">💡 数据为近似值，实际含量因品种和新鲜度有差异。建议每天提供 2-3 种不同蔬果搭配。</p>
+    <div class="accuracy-box">
+      <strong>📌 数据准确性说明</strong><br>
+      1）本表 VC 为常见公开营养数据的近似值（mg/100g），不同产地、成熟度、存放时间会影响实际含量。<br>
+      2）本工具用于日常喂养参考，不替代兽医诊断。若出现食欲下降、精神差、持续腹泻等情况，请尽快就医。<br>
+      3）建议优先把“高 VC 食物”作为主来源，并通过多食材轮换降低单一食材风险。
+    </div>
   </div>
 
   <!-- 喂食量计算器 -->
@@ -262,6 +293,30 @@
     <div class="form-group">
       <label class="form-label" for="feed-food">选择食物</label>
       <select class="form-select" id="feed-food"></select>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+        <button type="button" class="btn btn-chip" onclick="setFeedFoodByName('红甜椒')">首选：红甜椒</button>
+        <button type="button" class="btn btn-chip" onclick="setFeedFoodByName('黄甜椒')">首选：黄甜椒</button>
+        <button type="button" class="btn btn-chip" onclick="setFeedFoodByName('绿甜椒')">备选：绿甜椒</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label style="font-weight:normal;font-size:14px;display:flex;align-items:center;gap:6px">
+        <input type="checkbox" id="feed-mix-enable">
+        启用混合喂法（主食材 + 搭配食材）
+      </label>
+    </div>
+    <div class="form-group" id="feed-mix-group" style="display:none">
+      <label class="form-label" for="feed-mix-food">搭配食材（承担约 30% VC）</label>
+      <select class="form-select" id="feed-mix-food"></select>
+      <div style="margin-top:10px">
+        <label class="form-label" for="feed-mix-main-ratio" style="margin-bottom:8px">
+          主食材占比：<span id="feed-mix-ratio-label">70</span>%（搭配食材 <span id="feed-mix-sub-ratio-label">30</span>%）
+        </label>
+        <input class="form-input" type="range" id="feed-mix-main-ratio" min="50" max="90" step="5" value="70" style="padding:0;height:34px">
+        <div style="margin-top:8px;display:flex;justify-content:flex-end">
+          <button type="button" class="btn btn-chip" onclick="applyOptimalMixRatio()">一键最优比例</button>
+        </div>
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label" for="feed-level">补充强度</label>
@@ -273,6 +328,12 @@
     </div>
     <button class="btn" onclick="calcFeed()">计算喂食量</button>
     <div id="feed-result" class="result-box" style="display:none"></div>
+    <div class="accuracy-box">
+      <strong>📌 数据准确性说明</strong><br>
+      1）喂食克数按“每 100g 食物含 VC”反推，属于估算值，真实摄入会因个体挑食和剩食波动。<br>
+      2）当单一食材算出的克数较大时，建议使用混合喂法，降低高糖/高草酸/高钙食材的单日负担。<br>
+      3）维C补充是整体喂养的一部分，提摩西草和饮水管理同样重要。
+    </div>
   </div>
 
   <!-- 体重追踪 -->
@@ -335,8 +396,8 @@
 <script>
 // ========== 食物数据 ==========
 const FOODS = [
-  { name: '红甜椒', vc: 190, level: 'high', note: '首选补 VC 食物' },
-  { name: '黄甜椒', vc: 180, level: 'high', note: '同样优秀' },
+  { name: '红甜椒', vc: 127, level: 'high', note: '首选补 VC 食物（更稳妥）' },
+  { name: '黄甜椒', vc: 183, level: 'high', note: 'VC 很高，和红椒轮换更好' },
   { name: '绿甜椒', vc: 80, level: 'mid', note: '比红黄椒低一些' },
   { name: '西兰花', vc: 89, level: 'mid', note: '适量喂，易胀气' },
   { name: '羽衣甘蓝', vc: 120, level: 'high', note: '钙含量也高' },
@@ -351,6 +412,22 @@ const FOODS = [
   { name: '黄瓜', vc: 3, level: 'low', note: '几乎无 VC，补水用' },
   { name: '欧芹', vc: 133, level: 'high', note: '钙高，适量喂' }
 ];
+
+const FOOD_CAUTION = {
+  '草莓': '糖分较高，建议仅作零食',
+  '橙子': '偏酸且糖分高，建议仅作零食',
+  '猕猴桃': '糖分较高，建议仅作零食',
+  '番茄': '偏酸，敏感个体可能不耐受',
+  '菠菜': '草酸偏高，不建议高频大量喂',
+  '欧芹': '钙较高，建议与低钙蔬菜轮换',
+  '羽衣甘蓝': '钙较高，建议控制频次',
+  '胡萝卜': '糖分偏高，VC 低，不适合作为主补充来源',
+  '黄瓜': 'VC 低，主要用于补水'
+};
+
+function isValidWeight(weight) {
+  return Number.isFinite(weight) && weight >= 100 && weight <= 2000;
+}
 
 // ========== Tab 切换 ==========
 function switchTab(name) {
@@ -371,12 +448,14 @@ function switchTab(name) {
 function calcVC() {
   const weight = parseFloat(document.getElementById('vc-weight').value);
   const el = document.getElementById('vc-result');
-  if (!weight || weight < 100) { alert('请输入有效体重（100-2000 克）'); return; }
+  if (!isValidWeight(weight)) { alert('请输入有效体重（100-2000 克）'); return; }
   const kg = weight / 1000;
   const low = (kg * 10).toFixed(1);
   const high = (kg * 30).toFixed(1);
+  const mid = (kg * 20).toFixed(1);
   el.innerHTML = '<strong>体重：' + weight + ' 克</strong><br>' +
     '日常维持：' + low + ' mg VC<br>' +
+    '生长/恢复期：' + mid + ' mg VC<br>' +
     '应激/康复期：' + high + ' mg VC';
   el.style.display = 'block';
 }
@@ -409,7 +488,7 @@ function renderFoodTable() {
     }
     return foodSortAsc ? cmp : -cmp;
   });
-  const maxVc = 200;
+  const maxVc = Math.max.apply(null, FOODS.map(function(item) { return item.vc; })) || 1;
   let html = '';
   const levelMap = { high: '高', mid: '中', low: '低' };
   const classMap = { high: 'vc-high', mid: 'vc-mid', low: 'vc-low' };
@@ -434,28 +513,169 @@ function renderFoodTable() {
 // ========== 喂食量计算器 ==========
 function initFeedSelect() {
   const sel = document.getElementById('feed-food');
+  const mixSel = document.getElementById('feed-mix-food');
   let html = '';
   for (let i = 0; i < FOODS.length; i++) {
     html += '<option value="' + i + '">' + FOODS[i].name + '（' + FOODS[i].vc + 'mg/100g）</option>';
   }
   sel.innerHTML = html;
+  if (mixSel) {
+    mixSel.innerHTML = html;
+    mixSel.selectedIndex = 1; // 默认黄甜椒，避免与主食材完全重叠的概率
+  }
+}
+
+function setFeedFoodByName(name) {
+  const idx = FOODS.findIndex(function(item) { return item.name === name; });
+  const sel = document.getElementById('feed-food');
+  if (idx >= 0 && sel) { sel.value = String(idx); }
+}
+
+function toggleFeedMixGroup() {
+  const enabled = document.getElementById('feed-mix-enable').checked;
+  const group = document.getElementById('feed-mix-group');
+  if (group) { group.style.display = enabled ? 'block' : 'none'; }
+}
+
+function updateMixRatioLabel() {
+  const ratioEl = document.getElementById('feed-mix-main-ratio');
+  const mainLabel = document.getElementById('feed-mix-ratio-label');
+  const subLabel = document.getElementById('feed-mix-sub-ratio-label');
+  if (!ratioEl || !mainLabel || !subLabel) return;
+  const main = parseInt(ratioEl.value, 10) || 70;
+  const sub = 100 - main;
+  mainLabel.textContent = String(main);
+  subLabel.textContent = String(sub);
+}
+
+let optimalMixNote = '';
+
+function clearOptimalMixNote() {
+  optimalMixNote = '';
+}
+
+function findOptimalMixRatio(weight, level, mainFood, mixFood) {
+  // 目标：让单一食材克数不过大，同时尽量降低总喂食克数
+  let best = null;
+  for (let ratio = 50; ratio <= 90; ratio += 5) {
+    const needMg = (weight / 1000) * level;
+    const mainMg = needMg * (ratio / 100);
+    const mixMg = needMg * (1 - ratio / 100);
+    const mainGram = mainMg / mainFood.vc * 100;
+    const mixGram = mixMg / mixFood.vc * 100;
+    const maxGram = Math.max(mainGram, mixGram);
+    const totalGram = mainGram + mixGram;
+    const overLimitPenalty = (mainGram > 35 ? (mainGram - 35) * 2 : 0) + (mixGram > 35 ? (mixGram - 35) * 2 : 0);
+    const score = maxGram * 1.0 + totalGram * 0.15 + overLimitPenalty;
+    if (!best || score < best.score) {
+      best = {
+        ratio: ratio,
+        score: score,
+        mainGram: mainGram,
+        mixGram: mixGram
+      };
+    }
+  }
+  return best;
+}
+
+function applyOptimalMixRatio() {
+  const mixEnabled = document.getElementById('feed-mix-enable').checked;
+  const weight = parseFloat(document.getElementById('feed-weight').value);
+  const level = parseInt(document.getElementById('feed-level').value, 10);
+  const foodIdx = parseInt(document.getElementById('feed-food').value, 10);
+  const mixFoodIdx = parseInt(document.getElementById('feed-mix-food').value, 10);
+  if (!mixEnabled) {
+    alert('请先勾选“启用混合喂法”');
+    return;
+  }
+  if (!isValidWeight(weight)) {
+    alert('请先输入有效体重（100-2000 克）');
+    return;
+  }
+  if (foodIdx === mixFoodIdx) {
+    alert('主食材和搭配食材不能相同');
+    return;
+  }
+  const mainFood = FOODS[foodIdx];
+  const mixFood = FOODS[mixFoodIdx];
+  if (!mainFood || !mixFood || !level) {
+    alert('请先选择完整的喂食参数');
+    return;
+  }
+  const best = findOptimalMixRatio(weight, level, mainFood, mixFood);
+  if (!best) return;
+  const ratioEl = document.getElementById('feed-mix-main-ratio');
+  ratioEl.value = String(best.ratio);
+  updateMixRatioLabel();
+  optimalMixNote = '已自动推荐最优比例：' + best.ratio + '% / ' + (100 - best.ratio) + '%';
+  calcFeed();
 }
 
 function calcFeed() {
   const weight = parseFloat(document.getElementById('feed-weight').value);
   const foodIdx = parseInt(document.getElementById('feed-food').value);
+  const mixEnabled = document.getElementById('feed-mix-enable').checked;
+  const mixFoodIdx = parseInt(document.getElementById('feed-mix-food').value);
+  const mixMainRatio = parseInt(document.getElementById('feed-mix-main-ratio').value, 10) || 70;
   const level = parseInt(document.getElementById('feed-level').value);
   const el = document.getElementById('feed-result');
-  if (!weight || weight < 100) { alert('请输入有效体重（100-2000 克）'); return; }
+  if (!isValidWeight(weight)) { alert('请输入有效体重（100-2000 克）'); return; }
   const food = FOODS[foodIdx];
   const kg = weight / 1000;
   const needMg = kg * level;
-  // 需要多少克该食物
-  const needGram = (needMg / food.vc * 100).toFixed(1);
-  el.innerHTML = '<strong>' + food.name + '</strong><br>' +
-    '每日 VC 需求：' + needMg.toFixed(1) + ' mg<br>' +
-    '需要喂食：<strong>' + needGram + ' 克</strong> ' + food.name + '<br>' +
-    '<span style="font-size:13px;color:#9a7d5a">（约 ' + (needGram / 10).toFixed(1) + ' 个拇指大小的块）</span>';
+  // 默认：单一食材
+  let resultHtml = '';
+  const needGram = needMg / food.vc * 100;
+  const needGramText = needGram.toFixed(1);
+  let tips = [];
+  if (mixEnabled) {
+    const mixFood = FOODS[mixFoodIdx];
+    if (!mixFood || mixFoodIdx === foodIdx) {
+      tips.push('混合喂法需选择不同搭配食材，已按单一食材结果显示。');
+    } else {
+      const mainRate = mixMainRatio / 100;
+      const mixRate = 1 - mainRate;
+      const mainMg = needMg * mainRate;
+      const mixMg = needMg * mixRate;
+      const mainGram = mainMg / food.vc * 100;
+      const mixGram = mixMg / mixFood.vc * 100;
+      resultHtml =
+        '<strong>混合喂法建议</strong><br>' +
+        '每日 VC 目标：' + needMg.toFixed(1) + ' mg（主食材 ' + mixMainRatio + '% + 搭配食材 ' + (100 - mixMainRatio) + '%）<br>' +
+        '主食材：<strong>' + mainGram.toFixed(1) + ' 克</strong> ' + food.name + '<br>' +
+        '搭配食材：<strong>' + mixGram.toFixed(1) + ' 克</strong> ' + mixFood.name + '<br>' +
+        (optimalMixNote ? '<span style="font-size:13px;color:#6f8f4e">✅ ' + optimalMixNote + '</span><br>' : '') +
+        '<span style="font-size:13px;color:#9a7d5a">（混合喂法更适合长期轮换，减少单一食材风险）</span>';
+      if (food.vc < 30 || mixFood.vc < 30) {
+        tips.push('当前搭配中有低 VC 食材，建议至少保留一个高 VC 主食材（如红/黄甜椒）。');
+      }
+      if (mainGram > 35 || mixGram > 35) {
+        tips.push('某一食材所需克数仍偏高，可继续提高高 VC 食材比例。');
+      }
+    }
+  }
+  if (!resultHtml) {
+    resultHtml =
+      '<strong>' + food.name + '</strong><br>' +
+      '每日 VC 需求：' + needMg.toFixed(1) + ' mg<br>' +
+      '需要喂食：<strong>' + needGramText + ' 克</strong> ' + food.name + '<br>' +
+      '<span style="font-size:13px;color:#9a7d5a">（约 ' + (needGram / 10).toFixed(1) + ' 个拇指大小的块）</span>';
+    if (food.vc < 30) {
+      tips.push('该食物 VC 含量较低，不建议作为主要 VC 来源。');
+    }
+    if (needGram > 35) {
+      tips.push('仅靠这一种食物补足 VC 需要量偏大，建议换成高 VC 食物（如红/黄甜椒）或使用混合喂法。');
+    }
+  }
+  if (FOOD_CAUTION[food.name]) { tips.push(food.name + '：' + FOOD_CAUTION[food.name]); }
+  if (mixEnabled && mixFoodIdx !== foodIdx && FOODS[mixFoodIdx] && FOOD_CAUTION[FOODS[mixFoodIdx].name]) {
+    tips.push(FOODS[mixFoodIdx].name + '：' + FOOD_CAUTION[FOODS[mixFoodIdx].name]);
+  }
+  const tipHtml = tips.length > 0
+    ? '<div style="margin-top:8px;font-size:13px;color:#9a7d5a;line-height:1.6">⚠️ ' + tips.join('<br>⚠️ ') + '</div>'
+    : '';
+  el.innerHTML = resultHtml + tipHtml;
   el.style.display = 'block';
 }
 
@@ -476,7 +696,7 @@ function addWeight() {
   const valEl = document.getElementById('w-value');
   const date = dateEl.value;
   const value = parseFloat(valEl.value);
-  if (!date || !value || value < 100) {
+  if (!date || !isValidWeight(value)) {
     alert('请填写日期和有效体重');
     return;
   }
@@ -548,7 +768,7 @@ function renderWeightChart() {
   const cw = w - pad.left - pad.right;
   const ch = h - pad.top - pad.bottom;
   const values = list.map(function(item) { return item.value; });
-  const minV = Math.min.apply(null, values) - 50;
+  const minV = Math.max(0, Math.min.apply(null, values) - 50);
   const maxV = Math.max.apply(null, values) + 50;
   const range = maxV - minV || 1;
 
@@ -607,7 +827,7 @@ function assessHealth() {
   const stress = document.getElementById('h-stress').checked;
   const el = document.getElementById('health-result');
 
-  if (!weight || weight < 100) { alert('请输入有效体重（100-2000 克）'); return; }
+  if (!isValidWeight(weight)) { alert('请输入有效体重（100-2000 克）'); return; }
 
   let cards = [];
   // 体重评估
@@ -680,6 +900,25 @@ function assessHealth() {
 function init() {
   renderFoodTable();
   initFeedSelect();
+  const mixEnable = document.getElementById('feed-mix-enable');
+  if (mixEnable) {
+    mixEnable.addEventListener('change', toggleFeedMixGroup);
+    toggleFeedMixGroup();
+  }
+  const mixRatio = document.getElementById('feed-mix-main-ratio');
+  if (mixRatio) {
+    mixRatio.addEventListener('input', function() { updateMixRatioLabel(); clearOptimalMixNote(); });
+    updateMixRatioLabel();
+  }
+  const feedFood = document.getElementById('feed-food');
+  const mixFood = document.getElementById('feed-mix-food');
+  const feedLevel = document.getElementById('feed-level');
+  const feedWeight = document.getElementById('feed-weight');
+  if (feedFood) { feedFood.addEventListener('change', clearOptimalMixNote); }
+  if (mixFood) { mixFood.addEventListener('change', clearOptimalMixNote); }
+  if (feedLevel) { feedLevel.addEventListener('change', clearOptimalMixNote); }
+  if (feedWeight) { feedWeight.addEventListener('input', clearOptimalMixNote); }
+  if (mixEnable) { mixEnable.addEventListener('change', clearOptimalMixNote); }
   // 设置日期默认值为今天
   const today = new Date();
   const dateStr = today.getFullYear() + '-' +
